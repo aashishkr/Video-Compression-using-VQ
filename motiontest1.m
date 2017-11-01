@@ -143,6 +143,8 @@ end
 
 save('motionVectors.mat', 'motionVectorsAll');
 save('ComputationsAll.mat', 'computationsAll');
+two = int32(2);
+halfOfMotionVectorsAll = idivide(motionVectorsAll, two );
 motionVectorsAll
 %% Compensating index Video
 
@@ -154,13 +156,15 @@ for i = 1 : ifSize : sumFrames
 	pFrame1 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator), mbSize);
 	pFrame2 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator + 1), mbSize);
     
-	bFrame1 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator)/2, mbSize);
-	bFrame2 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator + 1)/2, mbSize);
+	bFrame1 = motionComp(iFrame, halfOfMotionVectorsAll(: , : ,motionVectIterator), mbSize);
+	bFrame2 = motionComp(iFrame, halfOfMotionVectorsAll(: , : ,motionVectIterator + 1), mbSize);
+    
 	compensatedVideo( : , : , i) = iFrame( : , : );
 	compensatedVideo( : , : , i+1) = bFrame1( : , : );
 	compensatedVideo( : , : , i+2) = pFrame1( : , : );
 	compensatedVideo( : , : , i+3) = bFrame2( : , : );
 	compensatedVideo( : , : , i+4) = pFrame2( : , : );
+	motionVectIterator = motionVectIterator + 1;
 end
 
 %% Recostructing original Video using Codebook
