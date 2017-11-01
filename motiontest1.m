@@ -1,4 +1,6 @@
-a = VideoReader('test2.avi');
+clear all;
+close all;
+a = VideoReader('testvideo.avi');
 row = a.Height;
 col = a.Width;
 N = row*col;
@@ -16,17 +18,17 @@ compiledCodebook = zeros(Nc,n,numberOfCodebook); %% All codebook will be stored
 %% Codebook formation for each GoP
 
 for ifn = 1 : ifSize : sumFrames
-    tSet = zeros(N,n);    %% training vector 
+    tSet = zeros(Nb,n);    %% training vector 
     iframe = read(a,ifn);
-    
+  
     for i = 1 : row
         for j = 1 : col
-                tSet((i-1)*(col)+j,:) = iframe(i,j,:);
+                tSet((i-1)*col+j,:) = iframe(i,j,:);
         end
     end
     
     temp = randi(N,1,Nc); %% randomly selecting a training vectors for inserting in codebook
-    temp = double(temp);  %% converting to double for better codebook formation
+%%    temp = double(temp);  %% converting to double for better codebook formation
     codebook = zeros(Nc,n);
     indexCM = 1;
     
@@ -78,10 +80,9 @@ for ifn = 1 : ifSize : sumFrames
     %%Storing all indexClosestMatch
     for i = 1 : row
             for j = 1: col
-                indexVideo(i,j,ifn)=indexClosestMatch(1,(i-1)*row+j);
+                indexVideo(i,j,ifn)=indexClosestMatch(1,(i-1)*col+j);
             end
     end
-    
     
     totFrames = ifSize-1;
     
@@ -95,26 +96,23 @@ for ifn = 1 : ifSize : sumFrames
         pframe = read(a,ifn+p);
         
         for i = 1 : row
-           
             for j = 1 : col
-                 tempTSet((i-1)*(a.Width)+j,:)=pframe(i,j,:);
+                 tempTSet((i-1)*col+j,:)=pframe(i,j,:);
             end
-            
         end
         
         for i = 1 : row
-            
             for j = 1 : col
-                index = ClosestMatch( tempTSet(i,:) , codebook(: , : ) );
+                index = ClosestMatch( tempTSet((i-1)*col+j,:) , codebook(: , : ) );
                 indexVideo(i,j,ifn+p) = index;
-            end
-            
+            end            
         end
         
     end
     
     compiledCodebook(:, :, codebookIterator) = codebook(:,:);
     codebookIterator = codebookIterator+1;
+    codebook
 end
 
 save('indexedVideo.mat', 'indexVideo');
@@ -122,8 +120,8 @@ save('codebookAll.mat', 'compiledCodebook');
 
 %% Motion Estmation on index video
 
-mbSize = 16; %% Macro block Size
-p = 7;  %% Search parameter
+mbSize = 8; %% Macro block Size
+p = 15;  %% Search parameter
 
 numberOfMacroBlocks = (row*col)/(mbSize*mbSize);
 motionVectorsAll = zeros(2,numberOfMacroBlocks,2*numberOfCodebook); %% Storing all Motion Vectors
@@ -131,7 +129,7 @@ computationsAll = zeros(2*numberOfCodebook);
 motionVectIterator = 1;
 iFrameAll = zeros(row,col,numberOfCodebook); %%Storing I frames 
 
-for i = 1 : ifsize : sumFrames
+for i = 1 : ifSize : sumFrames
     
 	iFrame = indexVideo(:,:,i);
 	iFrameAll(: , : , (motionVectIterator+1)/2 ) = iFrame(:,:);
@@ -145,31 +143,35 @@ end
 
 save('motionVectors.mat', 'motionVectorsAll');
 save('ComputationsAll.mat', 'computationsAll');
-
+halfOfMotionVectorsAll = motionVectorsAll/2;
+halfOfMotionVectorsAll = round(halfOfMotionVectorsAll);
+motionVectorsAll
 %% Compensating index Video
 
 compensatedVideo = zeros(row,col,sumFrames);
 motionVectIterator = 1;
 
 for i = 1 : ifSize : sumFrames 
-	iFrame = iFrameAll( : , : , (motionVectIterator+1)/2 );
+	iFrame = iFrameAll( : , : , uint8((motionVectIterator+1)/2) );
 	pFrame1 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator), mbSize);
 	pFrame2 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator + 1), mbSize);
-	bFrame1 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator)/2, mbSize);
-	bFrame2 = motionComp(iFrame, motionVectorsAll(: , : ,motionVectIterator + 1)/2, mbSize);
+    
+	bFrame1 = motionComp(iFrame, halfOfMotionVectorsAll(: , : ,motionVectIterator), mbSize);
+	bFrame2 = motionComp(iFrame, halfOfMotionVectorsAll(: , : ,motionVectIterator + 1), mbSize);
+    
 	compensatedVideo( : , : , i) = iFrame( : , : );
 	compensatedVideo( : , : , i+1) = bFrame1( : , : );
 	compensatedVideo( : , : , i+2) = pFrame1( : , : );
 	compensatedVideo( : , : , i+3) = bFrame2( : , : );
 	compensatedVideo( : , : , i+4) = pFrame2( : , : );
+	motionVectIterator = motionVectIterator + 2;
 end
 
 %% Recostructing original Video using Codebook
 
-compiledCodebook(:, :, codebookIterator) = codebook(:,:);
 codebookIterator = 1;
 
-compressedRGBVideo = VideoWriter('Estimated1.avi', 'Uncompressed AVI');
+compressedRGBVideo = VideoWriter('Estimated2.avi', 'Uncompressed AVI');
 compressedRGBVideo.FrameRate = frameRate;
 open(compressedRGBVideo);
 
