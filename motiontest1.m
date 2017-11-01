@@ -1,11 +1,11 @@
 clear all;
 close all;
-a = VideoReader('motiontest.avi');
+a = VideoReader('testvideo.avi');
 row = a.Height;
 col = a.Width;
 N = row*col;
 n = 3;  %%Breadth of Codebook
-Nc = 32;   %%Length of CodeBook
+Nc = 128;   %%Length of CodeBook
 Nb = N;      %%Number of training vectors
 ifSize = 5; %%Number of Frames in GoP
 frameRate = a.FrameRate;
@@ -120,7 +120,7 @@ save('codebookAll.mat', 'compiledCodebook');
 
 %% Motion Estmation on index video
 
-mbSize = 16; %% Macro block Size
+mbSize = 8; %% Macro block Size
 p = 7;  %% Search parameter
 
 numberOfMacroBlocks = (row*col)/(mbSize*mbSize);
@@ -144,7 +144,8 @@ end
 save('motionVectors.mat', 'motionVectorsAll');
 save('ComputationsAll.mat', 'computationsAll');
 two = int32(2);
-halfOfMotionVectorsAll = idivide(motionVectorsAll, two );
+halfOfMotionVectorsAll = motionVectorsAll/2;
+halfOfMotionVectorsAll = round(halfOfMotionVectorsAll);
 motionVectorsAll
 %% Compensating index Video
 
@@ -164,14 +165,14 @@ for i = 1 : ifSize : sumFrames
 	compensatedVideo( : , : , i+2) = pFrame1( : , : );
 	compensatedVideo( : , : , i+3) = bFrame2( : , : );
 	compensatedVideo( : , : , i+4) = pFrame2( : , : );
-	motionVectIterator = motionVectIterator + 1;
+	motionVectIterator = motionVectIterator + 2;
 end
 
 %% Recostructing original Video using Codebook
 
 codebookIterator = 1;
 
-compressedRGBVideo = VideoWriter('Estimated1.avi', 'Uncompressed AVI');
+compressedRGBVideo = VideoWriter('Estimated2.avi', 'Uncompressed AVI');
 compressedRGBVideo.FrameRate = frameRate;
 open(compressedRGBVideo);
 
