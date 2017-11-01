@@ -121,7 +121,7 @@ save('codebookAll.mat', 'compiledCodebook');
 %% Motion Estmation on index video
 
 mbSize = 8; %% Macro block Size
-p = 7;  %% Search parameter
+p = 15;  %% Search parameter
 
 numberOfMacroBlocks = (row*col)/(mbSize*mbSize);
 motionVectorsAll = zeros(2,numberOfMacroBlocks,2*numberOfCodebook); %% Storing all Motion Vectors
@@ -143,7 +143,6 @@ end
 
 save('motionVectors.mat', 'motionVectorsAll');
 save('ComputationsAll.mat', 'computationsAll');
-two = int32(2);
 halfOfMotionVectorsAll = motionVectorsAll/2;
 halfOfMotionVectorsAll = round(halfOfMotionVectorsAll);
 motionVectorsAll
