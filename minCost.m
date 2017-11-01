@@ -7,7 +7,6 @@
 %   dx : the motion vector component in columns
 %   dy : the motion vector component in rows
 %
-% Written by Aroh Barjatya
 
 function [dx, dy, min] = minCost(costs)
 
